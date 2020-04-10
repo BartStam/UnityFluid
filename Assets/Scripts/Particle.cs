@@ -16,21 +16,16 @@ public class Particle {
 	public float pressure;
 
 	// Forces
-	public Vector3 gravityForce;
+	public Vector3 externalForce;
 	public Vector3 pressureForce;
 	public Vector3 viscosityForce;
 	public Vector3 CombinedForce {
 		get {
-			return gravityForce + pressureForce + viscosityForce;
+			return externalForce + pressureForce + viscosityForce;
 		}
 	}
 
 	public Particle(GameObject gameObject) {
 		rigidbody = gameObject.GetComponent<Rigidbody>();
-	}
-
-	public void CommitProposed() {
-		velocity = (proposedPosition - Position) / Time.fixedDeltaTime;
-		Position = proposedPosition;
 	}
 }
