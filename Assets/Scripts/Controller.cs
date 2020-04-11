@@ -20,6 +20,7 @@ public class Controller : MonoBehaviour {
 	public float restDensity;
 	public float viscosity;
 	public float gasConstant;
+	public float particleMass;
 	public Vector3 external;
 	private Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
 
@@ -65,7 +66,7 @@ public class Controller : MonoBehaviour {
 			for (int j = 0; j < particles.Length; j++) {
 				// Evaluate density at particle location
 				// Equations (3) and (20) in Muller et al. (2003)
-				particles[i].density += Kernels.Poly6(particles[i].Position - particles[j].Position, smoothingRadius);
+				particles[i].density += particleMass * Kernels.Poly6(particles[i].Position - particles[j].Position, smoothingRadius);
 			}
 
 			// Evaluate pressure at particle location using Desbrun's equation
@@ -84,11 +85,11 @@ public class Controller : MonoBehaviour {
 
 				// Calculate pressure forces
 				// Equations (10) and (21) in Muller et al. (2003)
-				particles[i].pressureForce -= ((particles[i].pressure + particles[j].pressure) / (2.0f * particles[j].density)) * Kernels.SpikyGradient(particles[i].Position - particles[j].Position, smoothingRadius);
+				particles[i].pressureForce -= particleMass * ((particles[i].pressure + particles[j].pressure) / (2.0f * particles[j].density)) * Kernels.SpikyGradient(particles[i].Position - particles[j].Position, smoothingRadius);
 
 				// Calculate the viscosity force
 				// Equations (14) and (22) in Muller et al. (2003)
-				particles[i].viscosityForce += viscosity * ((particles[j].velocity - particles[i].velocity) / particles[j].density) * Kernels.ViscosityLaplacian(particles[i].Position - particles[j].Position, smoothingRadius);
+				particles[i].viscosityForce += particleMass * viscosity * ((particles[j].velocity - particles[i].velocity) / particles[j].density) * Kernels.ViscosityLaplacian(particles[i].Position - particles[j].Position, smoothingRadius);
 			}
 
 			// Evaluate gravity and external force at particle location
