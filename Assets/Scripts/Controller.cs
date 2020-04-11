@@ -1,5 +1,7 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 public class Controller : MonoBehaviour {
@@ -28,6 +30,8 @@ public class Controller : MonoBehaviour {
 	public Vector3 external;
 	private Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
 
+	// This should only show up in jobs branch
+
 	void Start() {
 		particleRadius = particlePrefab.transform.localScale.x / 2.0f;
 		InstantiateParticles();
@@ -35,7 +39,11 @@ public class Controller : MonoBehaviour {
 		kernel = new Kernel(smoothingRadius);
 	}
 
-    void FixedUpdate() {
+	private void Update() {
+		
+	}
+
+	void FixedUpdate() {
 		UpdateDensityPressure();
 		UpdateForces();
 		Integrate();
@@ -50,9 +58,9 @@ public class Controller : MonoBehaviour {
 			for (int y = 0; y < cubeDimensions.y; y++) {
 				for (int z = 0; z < cubeDimensions.z; z++) {
 					GameObject p = Instantiate(particlePrefab, new Vector3(
-						x * particleSpacing + Random.Range(-0.1f, 0.1f),
-						4.0f + y * particleSpacing + Random.Range(-0.1f, 0.1f),
-						z * particleSpacing + Random.Range(-0.1f, 0.1f)),
+						x * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f),
+						4.0f + y * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f),
+						z * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f)),
 						Quaternion.identity);
 
 					particles[x * cubeDimensions.y * cubeDimensions.z + y * cubeDimensions.z + z] = new Particle(p);
