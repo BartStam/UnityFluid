@@ -4,32 +4,35 @@ using UnityEngine;
 
 public class Controller : MonoBehaviour {
 	public GameObject particlePrefab;
+	private Particle[] particles;
 	private float particleRadius;
+	Kernel kernel;
 
-	// Options
-	public float timestep;
+	[Header("Spawn settings")]
 	public Vector3Int cubeDimensions;
+	public Vector3 minBounds;
+	public Vector3 maxBounds;
 	public float particleSpacing;
+	public float timestep;
+
+	[Header("Simulation settings")]
 	public float smoothingRadius;
-	public Vector3 minBound;
-	public Vector3 maxBound;
 	public float boundDamping = -0.5f;
 	private float gravityMultiplier;
 
-	// Physical constants
+	[Header("Psysical constants")]
+	public float particleMass;
 	public float restDensity;
 	public float viscosity;
 	public float gasConstant;
-	public float particleMass;
 	public Vector3 external;
 	private Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
-
-	public Particle[] particles;
 
 	void Start() {
 		particleRadius = particlePrefab.transform.localScale.x / 2.0f;
 		InstantiateParticles();
 		gravityMultiplier = 10 * (1.0f / timestep);
+		kernel = new Kernel(smoothingRadius);
 	}
 
     void FixedUpdate() {
@@ -66,7 +69,7 @@ public class Controller : MonoBehaviour {
 			for (int j = 0; j < particles.Length; j++) {
 				// Evaluate density at particle location
 				// Equations (3) and (20) in Muller et al. (2003)
-				particles[i].density += particleMass * Kernels.Poly6(particles[i].Position - particles[j].Position, smoothingRadius);
+				particles[i].density += particleMass * kernel.Poly6(particles[i].Position - particles[j].Position);
 			}
 
 			// Evaluate pressure at particle location using Desbrun's equation
@@ -85,11 +88,11 @@ public class Controller : MonoBehaviour {
 
 				// Calculate pressure forces
 				// Equations (10) and (21) in Muller et al. (2003)
-				particles[i].pressureForce -= particleMass * ((particles[i].pressure + particles[j].pressure) / (2.0f * particles[j].density)) * Kernels.SpikyGradient(particles[i].Position - particles[j].Position, smoothingRadius);
+				particles[i].pressureForce -= particleMass * ((particles[i].pressure + particles[j].pressure) / (2.0f * particles[j].density)) * kernel.SpikyGradient(particles[i].Position - particles[j].Position);
 
 				// Calculate the viscosity force
 				// Equations (14) and (22) in Muller et al. (2003)
-				particles[i].viscosityForce += particleMass * viscosity * ((particles[j].velocity - particles[i].velocity) / particles[j].density) * Kernels.ViscosityLaplacian(particles[i].Position - particles[j].Position, smoothingRadius);
+				particles[i].viscosityForce += particleMass * viscosity * ((particles[j].velocity - particles[i].velocity) / particles[j].density) * kernel.ViscosityLaplacian(particles[i].Position - particles[j].Position);
 			}
 
 			// Evaluate gravity and external force at particle location
@@ -98,6 +101,7 @@ public class Controller : MonoBehaviour {
 		}
 	}
 
+	// Standard Euler integration
 	private void Integrate() {
 		for (int i = 0; i < particles.Length; i++) {
 			particles[i].velocity += timestep * particles[i].CombinedForce / particles[i].density;
@@ -107,34 +111,33 @@ public class Controller : MonoBehaviour {
 
 	private void HandleCollisions() {
 		foreach (Particle p in particles) {
-			// If we are colliding with the floor
-			if (p.proposedPosition.y < minBound.y + particleRadius) {
-				p.proposedPosition.y = minBound.y + particleRadius + Mathf.Epsilon;
+			if (p.proposedPosition.y < minBounds.y + particleRadius) {
+				p.proposedPosition.y = minBounds.y + particleRadius + Mathf.Epsilon;
 				p.velocity.y = boundDamping * p.velocity.y;
 			}
 
-			if (p.proposedPosition.y > maxBound.y - particleRadius) {
-				p.proposedPosition.y = maxBound.y - particleRadius - Mathf.Epsilon;
+			if (p.proposedPosition.y > maxBounds.y - particleRadius) {
+				p.proposedPosition.y = maxBounds.y - particleRadius - Mathf.Epsilon;
 				p.velocity.y = boundDamping * p.velocity.y;
 			}
 
-			if (p.proposedPosition.x < minBound.x + particleRadius) {
-				p.proposedPosition.x = minBound.x + particleRadius + Mathf.Epsilon;
+			if (p.proposedPosition.x < minBounds.x + particleRadius) {
+				p.proposedPosition.x = minBounds.x + particleRadius + Mathf.Epsilon;
 				p.velocity.x = boundDamping * p.velocity.x;
 			}
 
-			if (p.proposedPosition.x > maxBound.x - particleRadius) {
-				p.proposedPosition.x = maxBound.x - particleRadius - Mathf.Epsilon;
+			if (p.proposedPosition.x > maxBounds.x - particleRadius) {
+				p.proposedPosition.x = maxBounds.x - particleRadius - Mathf.Epsilon;
 				p.velocity.x = boundDamping * p.velocity.x;
 			}
 
-			if (p.proposedPosition.z < minBound.z + particleRadius) {
-				p.proposedPosition.z = minBound.z + particleRadius + Mathf.Epsilon;
+			if (p.proposedPosition.z < minBounds.z + particleRadius) {
+				p.proposedPosition.z = minBounds.z + particleRadius + Mathf.Epsilon;
 				p.velocity.z = boundDamping * p.velocity.z;
 			}
 
-			if (p.proposedPosition.z > maxBound.z - particleRadius) {
-				p.proposedPosition.z = maxBound.z - particleRadius - Mathf.Epsilon;
+			if (p.proposedPosition.z > maxBounds.z - particleRadius) {
+				p.proposedPosition.z = maxBounds.z - particleRadius - Mathf.Epsilon;
 				p.velocity.z = boundDamping * p.velocity.z;
 			}
 		}
@@ -143,7 +146,6 @@ public class Controller : MonoBehaviour {
 	public void CommitProposedPosition() {
 		foreach (Particle p in particles) {
 			p.Position = p.proposedPosition;
-			// p.velocity = 0.99f * p.velocity;
 		}
 	}
 }

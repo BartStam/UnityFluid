@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Particle {
-	private Rigidbody rigidbody;
+	private GameObject gameObject;
 	public Vector3 proposedPosition;
 	public Vector3 velocity;
 	public Vector3 Position {
-		get { return rigidbody.position; }
-		set { rigidbody.position = value; }
+		get { return gameObject.transform.position; }
+		set { gameObject.transform.position = value; }
 	}
 
 	// Particle state
@@ -26,6 +26,6 @@ public class Particle {
 	}
 
 	public Particle(GameObject gameObject) {
-		rigidbody = gameObject.GetComponent<Rigidbody>();
+		this.gameObject = gameObject;
 	}
 }
