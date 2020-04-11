@@ -30,7 +30,7 @@ public class Controller : MonoBehaviour {
 	public Vector3 external;
 	private Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
 
-	// This should only show up in jobs branch
+	// JOBS
 
 	void Start() {
 		particleRadius = particlePrefab.transform.localScale.x / 2.0f;
