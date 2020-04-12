@@ -1,12 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Unity.Mathematics;
 using UnityEngine;
 
 public class Particle {
 	private GameObject gameObject;
-	public Vector3 proposedPosition;
-	public Vector3 velocity;
-	public Vector3 Position {
+	public float3 proposedPosition;
+	public float3 velocity;
+	public float3 Position {
 		get { return gameObject.transform.position; }
 		set { gameObject.transform.position = value; }
 	}
@@ -16,10 +15,10 @@ public class Particle {
 	public float pressure;
 
 	// Forces
-	public Vector3 externalForce;
-	public Vector3 pressureForce;
-	public Vector3 viscosityForce;
-	public Vector3 CombinedForce {
+	public float3 externalForce;
+	public float3 pressureForce;
+	public float3 viscosityForce;
+	public float3 CombinedForce {
 		get {
 			return externalForce + pressureForce + viscosityForce;
 		}

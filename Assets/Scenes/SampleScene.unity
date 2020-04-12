@@ -132,7 +132,7 @@ GameObject:
   - component: {fileID: 164114176}
   - component: {fileID: 164114175}
   m_Layer: 0
-  m_Name: PBD Controller
+  m_Name: Controller
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -152,12 +152,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   particlePrefab: {fileID: 7436545564199566233, guid: ce2a4c8a8b3a1b44fbf2a57fe888e04b,
     type: 3}
-  cubeDimensions: {x: 4, y: 4, z: 4}
-  particleSpacing: 0.2
-  smoothingRadius: 1
-  restDensity: 80
-  viscosity: 3
-  gasConstant: 8
+  cuboidDimensions: {x: 4, y: 4, z: 4}
+  unitMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  unitMaterial: {fileID: 2100000, guid: e5f4d790be5f5ef4ca5299fc7dbc4f7f, type: 2}
+  gameObjectPrefab: {fileID: 7436545564199566233, guid: ce2a4c8a8b3a1b44fbf2a57fe888e04b,
+    type: 3}
 --- !u!4 &164114176
 Transform:
   m_ObjectHideFlags: 0
@@ -340,8 +339,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.26413053, y: 0.27852994, z: -0.07997208, w: 0.9199243}
+  m_LocalPosition: {x: -16.021132, y: 14.186203, z: -19.663467}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -361,7 +360,7 @@ GameObject:
   - component: {fileID: 1185560110}
   m_Layer: 0
   m_Name: Platform
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -434,8 +433,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1185560109}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -8, z: 0}
-  m_LocalScale: {x: 20, y: 1, z: 20}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalScale: {x: 40, y: 1, z: 40}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2

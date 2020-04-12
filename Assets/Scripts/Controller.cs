@@ -1,69 +1,103 @@
-﻿using System.Collections;
+﻿using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Unity.Rendering;
+using Unity.Jobs;
 using UnityEngine;
 
 public class Controller : MonoBehaviour {
 	public GameObject particlePrefab;
 	private Particle[] particles;
 	private float particleRadius;
-	Kernel kernel;
 
 	[Header("Spawn settings")]
-	public Vector3Int cubeDimensions;
-	public Vector3 minBounds;
-	public Vector3 maxBounds;
-	public float particleSpacing;
-	public float timestep;
+	public Vector3Int cuboidDimensions;
+	public readonly static Vector3 minBounds = new Vector3(-8f, 0f, -8f);
+	public readonly static Vector3 maxBounds = new Vector3(8f, 8f, 8f);
+	public readonly static float particleSpacing = 0.5f;
+	public readonly static float timestep = 0.0008f;
 
 	[Header("Simulation settings")]
-	public float smoothingRadius;
-	public float boundDamping = -0.5f;
-	private float gravityMultiplier;
+	public readonly static float smoothingRadius = 1f;
+	public readonly static float boundDamping = -0.5f;
+	public readonly static float gravityMultiplier = 12000f;
 
 	[Header("Psysical constants")]
-	public float particleMass;
-	public float restDensity;
-	public float viscosity;
-	public float gasConstant;
-	public Vector3 external;
-	private Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
+	public readonly static float particleMass = 65f;
+	public readonly static float restDensity = 500;
+	public readonly static float viscosity = 100f;
+	public readonly static float gasConstant = 2000f;
+	public readonly static Vector3 external = new Vector3(0f, 0f, 0f);
+	private readonly static Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
 
-	// JOBS
+	[Header("ECS")]
+	public GameObject gameObjectPrefab;
+
+	private Entity entityPrefab;
+	private World defaultWorld;
+	private EntityManager entityManager;
+
+	private Entity[] particleEntities;
+
 
 	void Start() {
+		float3 testFloat = new float3(2f, 2f, 0f);
+
+		InstantiateEntities();
+		//InstantiateParticles();
+
+
+
 		particleRadius = particlePrefab.transform.localScale.x / 2.0f;
-		InstantiateParticles();
-		gravityMultiplier = 10 * (1.0f / timestep);
-		kernel = new Kernel(smoothingRadius);
 	}
 
-	private void Update() {
-		
+	private void InstantiateEntities() {
+		defaultWorld = World.DefaultGameObjectInjectionWorld;
+		entityManager = defaultWorld.EntityManager;
+
+		GameObjectConversionSettings settings = GameObjectConversionSettings.FromWorld(defaultWorld, null);
+		entityPrefab = GameObjectConversionUtility.ConvertGameObjectHierarchy(gameObjectPrefab, settings);
+
+		particleEntities = new Entity[cuboidDimensions.x * cuboidDimensions.y * cuboidDimensions.z];
+
+		for (int x = 0; x < cuboidDimensions.x; x++) {
+			for (int y = 0; y < cuboidDimensions.y; y++) {
+				for (int z = 0; z < cuboidDimensions.z; z++) {
+					Entity e = entityManager.Instantiate(entityPrefab);
+					entityManager.SetComponentData(e, new Translation { Value = new float3(
+						x * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f),
+						4.0f + y * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f),
+						z * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f))
+					});
+
+					particleEntities[x * cuboidDimensions.y * cuboidDimensions.z + y * cuboidDimensions.z + z] = e;
+				}
+			}
+		}
 	}
 
 	void FixedUpdate() {
-		UpdateDensityPressure();
-		UpdateForces();
-		Integrate();
-		HandleCollisions();
-		CommitProposedPosition();
+		//UpdateDensityPressure();
+		//UpdateForces();
+		//Integrate();
+		//HandleCollisions();
+		//CommitProposedPosition();
 	}
 
 	private void InstantiateParticles() {
-		particles = new Particle[cubeDimensions.x * cubeDimensions.y * cubeDimensions.z];
+		particles = new Particle[cuboidDimensions.x * cuboidDimensions.y * cuboidDimensions.z];
 
-		for (int x = 0; x < cubeDimensions.x; x++) {
-			for (int y = 0; y < cubeDimensions.y; y++) {
-				for (int z = 0; z < cubeDimensions.z; z++) {
+		for (int x = 0; x < cuboidDimensions.x; x++) {
+			for (int y = 0; y < cuboidDimensions.y; y++) {
+				for (int z = 0; z < cuboidDimensions.z; z++) {
 					GameObject p = Instantiate(particlePrefab, new Vector3(
 						x * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f),
 						4.0f + y * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f),
 						z * particleSpacing + UnityEngine.Random.Range(-0.1f, 0.1f)),
 						Quaternion.identity);
 
-					particles[x * cubeDimensions.y * cubeDimensions.z + y * cubeDimensions.z + z] = new Particle(p);
+					particles[x * cuboidDimensions.y * cuboidDimensions.z + y * cuboidDimensions.z + z] = new Particle(p);
 				}
 			}
 		}
@@ -77,7 +111,7 @@ public class Controller : MonoBehaviour {
 			for (int j = 0; j < particles.Length; j++) {
 				// Evaluate density at particle location
 				// Equations (3) and (20) in Muller et al. (2003)
-				particles[i].density += particleMass * kernel.Poly6(particles[i].Position - particles[j].Position);
+				particles[i].density += particleMass * Kernels.Poly6(particles[i].Position - particles[j].Position, smoothingRadius);
 			}
 
 			// Evaluate pressure at particle location using Desbrun's equation
@@ -96,11 +130,11 @@ public class Controller : MonoBehaviour {
 
 				// Calculate pressure forces
 				// Equations (10) and (21) in Muller et al. (2003)
-				particles[i].pressureForce -= particleMass * ((particles[i].pressure + particles[j].pressure) / (2.0f * particles[j].density)) * kernel.SpikyGradient(particles[i].Position - particles[j].Position);
+				particles[i].pressureForce -= particleMass * ((particles[i].pressure + particles[j].pressure) / (2.0f * particles[j].density)) * Kernels.SpikyGradient(particles[i].Position - particles[j].Position, smoothingRadius);
 
 				// Calculate the viscosity force
 				// Equations (14) and (22) in Muller et al. (2003)
-				particles[i].viscosityForce += particleMass * viscosity * ((particles[j].velocity - particles[i].velocity) / particles[j].density) * kernel.ViscosityLaplacian(particles[i].Position - particles[j].Position);
+				particles[i].viscosityForce += particleMass * viscosity * ((particles[j].velocity - particles[i].velocity) / particles[j].density) * Kernels.ViscosityLaplacian(particles[i].Position - particles[j].Position, smoothingRadius);
 			}
 
 			// Evaluate gravity and external force at particle location
