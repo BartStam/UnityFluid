@@ -150,9 +150,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41335120c2791ab49b0639a1c6dd0046, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particlePrefab: {fileID: 7436545564199566233, guid: ce2a4c8a8b3a1b44fbf2a57fe888e04b,
-    type: 3}
-  cuboidDimensions: {x: 6, y: 50, z: 6}
+  cuboidDimensions: {x: 7, y: 70, z: 7}
   gameObjectPrefab: {fileID: 7436545564199566233, guid: ce2a4c8a8b3a1b44fbf2a57fe888e04b,
     type: 3}
 --- !u!4 &164114176
