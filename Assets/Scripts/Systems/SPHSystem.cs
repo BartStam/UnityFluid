@@ -44,7 +44,7 @@ public class SPHSystem : SystemBase {
 
 		JobHandle integrateJob = Entities.ForEach((ref ParticleData particleData, in Translation translation) => {
 			float3 combinedForce = particleData.gravityForce + particleData.pressureForce + particleData.viscosityForce;
-			particleData.velocity = Controller.timestep * combinedForce / particleData.density;
+			particleData.velocity += Controller.timestep * combinedForce / particleData.density;
 			particleData.proposedPosition = translation.Value + Controller.timestep * particleData.velocity;
 		}).ScheduleParallel(calculateForceJob);
 
