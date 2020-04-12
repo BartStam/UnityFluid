@@ -12,5 +12,4 @@ public struct ParticleData : IComponentData {
 	public float3 viscosityForce;
 	public float3 gravityForce;
 	public float3 pressureForce;
-	
 }
